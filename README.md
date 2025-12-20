@@ -27,7 +27,7 @@ A solução consiste em:
 #### 2.1 Clone o repositório
 
 ```bash
-git clone [link-do-seu-repositório]
+git clone https://github.com/SAUL-ALVES/vitrine-facil-app
 cd vitrine-facil
 ````
 
