@@ -1,0 +1,11 @@
+﻿/* styles globais mínimos */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color: #0f172a;
+  background: #ffffff;
+}
+a { color: inherit; }
+
