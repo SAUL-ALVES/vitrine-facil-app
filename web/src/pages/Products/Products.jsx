@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 const STORE_KEY = "vf_store_profile";
 const PRODUCTS_KEY = "vf_products";
@@ -34,6 +35,7 @@ function saveProducts(userId, list) {
 
 export default function Products() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const userId = user?.idUsuario || user?.id || user?.sub || "anon";
 
   const store = useMemo(() => loadStoreProfile(userId), [userId]);
@@ -126,7 +128,6 @@ export default function Products() {
             </div>
           </div>
 
-          {/* logo retangular no topo */}
           <div
             style={{
               width: 170,
@@ -221,15 +222,36 @@ export default function Products() {
               </div>
             </div>
 
-            <button className="auth-button" type="submit">
-              Salvar produto
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+              <button className="auth-button" type="submit">
+                Salvar produto
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={() => navigate('/dashboard')}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  fontWeight: "bold",
+                  border: "2px solid #0A7B6C",
+                  background: "transparent",
+                  color: "#0A7B6C",
+                  cursor: "pointer",
+                  width: "100%",
+                  fontSize: "16px",
+                  transition: "all 0.2s"
+                }}
+              >
+                Pular por enquanto
+              </button>
+            </div>
           </form>
 
           {/* lista */}
-          <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+          <div style={{ marginTop: 24, display: "grid", gap: 12 }}>
             {produtos.length === 0 ? (
-              <p className="auth-subtitle" style={{ margin: 0 }}>
+              <p className="auth-subtitle" style={{ margin: 0, textAlign: "center" }}>
                 Nenhum produto cadastrado ainda.
               </p>
             ) : (
