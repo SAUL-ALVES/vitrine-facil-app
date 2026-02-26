@@ -1,0 +1,294 @@
+:root {
+  --vf-primary: #0A7B6C; /* Seu verde principal */
+  --vf-primary-dark: #075a4f;
+  --vf-primary-light: #e6f2f0;
+  --vf-bg: #f4f6f8;
+  --vf-card-bg: #ffffff;
+  --vf-text-main: #1a1d20;
+  --vf-text-muted: #6c757d;
+  --vf-orange: #f59e0b;
+  --vf-red: #dc3545;
+  --vf-red-light: #fde8e9;
+  --vf-border: #e9ecef;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--vf-bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  padding-bottom: 80px;
+}
+
+/* Utilitários de Texto e Alinhamento */
+.text-green { color: var(--vf-primary); }
+.text-orange { color: var(--vf-orange); }
+.text-red { color: var(--vf-red); }
+.text-white { color: white; }
+.fw-bold { font-weight: bold; }
+.flex-align { display: flex; align-items: center; gap: 8px; }
+
+/* Header */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: var(--vf-card-bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-badge {
+  background-color: var(--vf-primary-light);
+  color: var(--vf-primary);
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.logo-text {
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--vf-primary);
+}
+
+.user-avatar {
+  background-color: var(--vf-primary);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Conteúdo Principal */
+.main-content {
+  padding: 20px;
+  flex: 1;
+}
+
+.dashboard-section {
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vf-text-main);
+  margin-bottom: 16px;
+}
+
+/* Insights Financeiros (Cards) */
+.insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.insight-card {
+  background-color: var(--vf-card-bg);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insight-card.highlight-green {
+  background-color: var(--vf-primary);
+  color: white;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vf-text-muted);
+}
+
+.highlight-green .insight-header {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.insight-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--vf-text-main);
+}
+
+.highlight-green .insight-value {
+  color: white;
+}
+
+.insight-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--vf-text-muted);
+}
+
+.insight-trend.positive {
+  color: #10b981; /* Verde claro vibrante para setas positivas */
+  font-weight: 600;
+}
+
+/* Gráfico de Barras CSS */
+.chart-card {
+  background-color: var(--vf-card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.simple-bar-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 140px;
+  padding-top: 20px;
+}
+
+.bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.bar {
+  width: 24px;
+  background-color: var(--vf-primary-light);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+}
+
+.bar.today {
+  background-color: var(--vf-primary);
+}
+
+.day-label {
+  font-size: 12px;
+  color: var(--vf-text-muted);
+}
+
+/* Botões Gigantes (Ações) */
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.action-card {
+  background-color: var(--vf-card-bg);
+  border: none;
+  border-radius: 16px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.action-card.primary-action {
+  background-color: var(--vf-primary);
+}
+
+.action-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vf-text-main);
+}
+
+/* Alertas de Estoque */
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-item {
+  background-color: var(--vf-card-bg);
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid var(--vf-red);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--vf-text-main);
+}
+
+.stock-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stock-badge.danger {
+  background-color: var(--vf-orange);
+  color: white;
+}
+
+.stock-badge.empty {
+  background-color: var(--vf-red-light);
+  color: var(--vf-red);
+}
+
+/* Navegação Inferior */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--vf-card-bg);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 8px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--vf-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-item.active {
+  color: var(--vf-primary);
+  font-weight: 700;
+}
