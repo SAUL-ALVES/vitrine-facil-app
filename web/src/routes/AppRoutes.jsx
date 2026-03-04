@@ -6,6 +6,8 @@ import Register from "../pages/Auth/Register.jsx";
 import HomeWelcome from "../pages/Auth/HomeWelcome.jsx";
 import Products from "../pages/Products/Products.jsx";
 import Dashboard from "../pages/Dashboard/Dashboard.jsx";
+import Estoque from "../pages/Estoque/Estoque";
+
 
 export default function AppRoutes() {
   return (
@@ -15,6 +17,7 @@ export default function AppRoutes() {
       <Route path="/products" element={<Products />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/estoque" element={<Estoque />} />
       
 
 

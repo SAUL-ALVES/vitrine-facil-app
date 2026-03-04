@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
-import { 
-  ShoppingCart, 
-  TrendingUp, 
-  AlertCircle, 
-  LayoutDashboard, 
-  QrCode, 
-  Package, 
+import {
+  ShoppingCart,
+  TrendingUp,
+  LayoutDashboard,
+  QrCode,
+  Package,
   Store,
   DollarSign
 } from 'lucide-react';
@@ -25,10 +25,10 @@ function loadProducts(userId) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const userId = user?.idUsuario || user?.id || user?.sub || "anon";
-  
-  // Extrai as iniciais do usuário ou usa VF como padrão
+
   const userInitials = user?.nome ? user.nome.substring(0, 2).toUpperCase() : "VF";
 
   const [produtos, setProdutos] = useState([]);
@@ -38,11 +38,9 @@ export default function Dashboard() {
   }, [userId]);
 
   const totalProdutos = produtos.length;
-  
-  // Informações zeradas por padrão, pois ainda não há fluxo de vendas 
+
   const vendasHoje = 0;
   const lucroHoje = 0;
-  const chartHeight = "0%"; // Gráfico zerado
 
   return (
     <div className="dashboard-layout">
@@ -50,26 +48,34 @@ export default function Dashboard() {
       <header className="top-header">
         <div className="logo-container">
           <div className="logo-badge">VF</div>
-          <span className="logo-text">Vitrine<span className="text-orange">Fácil</span></span>
+          <div className="logo-text-wrap">
+            <span className="logo-text">
+              Vitrine<span className="text-orange">Fácil</span>
+            </span>
+            <span className="logo-subtext">Dashboard do vendedor</span>
+          </div>
         </div>
+
         <div className="header-actions">
           <div className="user-avatar">{userInitials}</div>
         </div>
       </header>
 
       <main className="main-content">
-        
+
         {/* INSIGHTS FINANCEIROS */}
         <section className="dashboard-section">
           <h2 className="section-title">Resumo de Hoje</h2>
-          
+
           <div className="insights-grid">
             <div className="insight-card highlight-green">
               <div className="insight-header">
-                <DollarSign size={20} />
+                <DollarSign size={16} />
                 <span>Entrou Hoje</span>
               </div>
-              <div className="insight-value">R$ 0,00</div>
+              <div className="insight-value">
+                R$ {vendasHoje.toFixed(2).replace('.', ',')}
+              </div>
               <div className="insight-trend">
                 <span>Sem vendas hoje</span>
               </div>
@@ -77,10 +83,12 @@ export default function Dashboard() {
 
             <div className="insight-card">
               <div className="insight-header">
-                <TrendingUp size={20} className="text-green" />
+                <TrendingUp size={16} className="text-green" />
                 <span>Seu Lucro</span>
               </div>
-              <div className="insight-value text-green">R$ 0,00</div>
+              <div className="insight-value text-green">
+                R$ {lucroHoje.toFixed(2).replace('.', ',')}
+              </div>
               <div className="insight-trend">
                 <span>Aprox. 30% das vendas</span>
               </div>
@@ -88,31 +96,24 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* GRÁFICO ZERADO */}
+        {/* VENDAS DA SEMANA (estado vazio) */}
         <section className="dashboard-section">
           <h2 className="section-title">Vendas da Semana</h2>
-          <div className="chart-card">
-            <div className="simple-bar-chart">
-              <div className="bar-group">
-                <div className="bar" style={{ height: chartHeight }}></div>
-                <span className="day-label">Seg</span>
-              </div>
-              <div className="bar-group">
-                <div className="bar" style={{ height: chartHeight }}></div>
-                <span className="day-label">Ter</span>
-              </div>
-              <div className="bar-group">
-                <div className="bar" style={{ height: chartHeight }}></div>
-                <span className="day-label">Qua</span>
-              </div>
-              <div className="bar-group">
-                <div className="bar" style={{ height: chartHeight }}></div>
-                <span className="day-label">Qui</span>
-              </div>
-              <div className="bar-group">
-                <div className="bar today" style={{ height: chartHeight }}></div>
-                <span className="day-label fw-bold">Hoje</span>
-              </div>
+
+          <div className="chart-card chart-empty-state">
+            <TrendingUp size={22} className="chart-empty-icon" />
+            <p className="chart-empty-title">Sem vendas nesta semana</p>
+            <p className="chart-empty-subtitle">
+              O gráfico será exibido quando houver movimentação.
+            </p>
+
+            {/* Rodapé visual com dias (estilo da sua referência) */}
+            <div className="chart-days-row">
+              <span>Seg</span>
+              <span>Ter</span>
+              <span>Qua</span>
+              <span>Qui</span>
+              <span className="today-label">Hoje</span>
             </div>
           </div>
         </section>
@@ -120,12 +121,21 @@ export default function Dashboard() {
         {/* BOTÕES DE AÇÃO PRINCIPAIS */}
         <section className="dashboard-section">
           <div className="actions-grid">
-            <button className="action-card primary-action">
-              <ShoppingCart size={40} className="action-icon text-white" />
+            <button
+              className="action-card primary-action"
+              type="button"
+              onClick={() => navigate("/products")} // troque para "/pdv" quando criar a rota
+            >
+              <ShoppingCart size={34} className="action-icon text-white" />
               <span className="action-title text-white">Nova Venda</span>
             </button>
-            <button className="action-card">
-              <QrCode size={40} className="action-icon text-green" />
+
+            <button
+              className="action-card"
+              type="button"
+              onClick={() => navigate("/products")} // troque para "/pedidos" ou "/scan" depois
+            >
+              <QrCode size={34} className="action-icon text-green" />
               <span className="action-title">Escanear</span>
             </button>
           </div>
@@ -134,18 +144,29 @@ export default function Dashboard() {
         {/* STATUS GERAL DE ESTOQUE */}
         <section className="dashboard-section">
           <h2 className="section-title flex-align">
-            <Package size={20} className="text-orange" /> Status do Catálogo
+            <Package size={18} className="text-orange" /> Status do Catálogo
           </h2>
+
           <div className="alert-list">
-            <div className="alert-item" style={{ borderLeftColor: totalProdutos > 0 ? '#0A7B6C' : '#f59e0b' }}>
-              <span className="product-name">
-                {totalProdutos === 0 
-                  ? "Seu catálogo está vazio." 
-                  : `Você possui ${totalProdutos} produto(s) cadastrado(s).`}
-              </span>
-              <span className={`stock-badge ${totalProdutos > 0 ? 'ready' : 'danger'}`}>
+            <div
+              className="alert-item"
+              style={{ borderLeftColor: totalProdutos > 0 ? '#0A7B6C' : '#f59e0b' }}
+            >
+              <div className="alert-content">
+                <span className="product-name">
+                  {totalProdutos === 0
+                    ? "Seu catálogo está vazio."
+                    : `Você possui ${totalProdutos} produto(s) cadastrado(s).`}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className={`stock-badge ${totalProdutos > 0 ? 'ready' : 'danger'}`}
+                onClick={() => navigate("/estoque")}
+              >
                 {totalProdutos === 0 ? "Adicionar" : "Ver Estoque"}
-              </span>
+              </button>
             </div>
           </div>
         </section>
@@ -154,20 +175,40 @@ export default function Dashboard() {
 
       {/* Navegação Inferior */}
       <nav className="bottom-nav">
-        <button className="nav-item active">
-          <LayoutDashboard size={24} />
+        <button
+          className="nav-item active"
+          type="button"
+          onClick={() => navigate("/dashboard")}
+        >
+          <LayoutDashboard size={22} />
           <span>Início</span>
         </button>
-        <button className="nav-item">
-          <QrCode size={24} />
+
+        <button
+          className="nav-item"
+          type="button"
+          onClick={() => navigate("/products")} // troque para "/pedidos" quando criar
+        >
+          <QrCode size={22} />
           <span>Pedidos</span>
+          <span className="nav-badge">1</span>
         </button>
-        <button className="nav-item">
-          <Package size={24} />
+
+        <button
+          className="nav-item"
+          type="button"
+          onClick={() => navigate("/estoque")}
+        >
+          <Package size={22} />
           <span>Estoque</span>
         </button>
-        <button className="nav-item">
-          <Store size={24} />
+
+        <button
+          className="nav-item"
+          type="button"
+          onClick={() => navigate("/products")} // troque para "/pdv" quando criar
+        >
+          <Store size={22} />
           <span>Caixa</span>
         </button>
       </nav>
