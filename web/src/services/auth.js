@@ -60,7 +60,7 @@ export const authService = {
     }
   },
 
-  // ✅ AGORA register NÃO recebe role e sempre cadastra como lojista
+  // AGORA register NÃO recebe role e sempre cadastra como lojista
   register({ nome, cpf, email, senha, segmento }) {
     if (!nome || !cpf || !email || !senha || !segmento) {
       throw new Error("Preencha todos os campos.");
@@ -74,7 +74,8 @@ export const authService = {
     const emailLower = String(email).trim().toLowerCase();
     if (!emailLower.includes("@")) throw new Error("Email inválido.");
 
-    if (senha.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres.");
+    if (senha.length < 6)
+      throw new Error("Senha deve ter no mínimo 6 caracteres.");
 
     if (users.some((u) => u.email === emailLower)) {
       throw new Error("Esse email já está cadastrado.");
@@ -83,10 +84,8 @@ export const authService = {
       throw new Error("Esse CPF já está cadastrado.");
     }
     if (!segmento || !String(segmento).trim()) {
-  throw new Error("Selecione o segmento do lojista.");
-}
-
-    
+      throw new Error("Selecione o segmento do lojista.");
+    }
 
     const newUser = {
       idUsuario: crypto.randomUUID(),
@@ -94,9 +93,8 @@ export const authService = {
       cpf: cpfClean,
       email: emailLower,
       senha, // mock (não hash)
-      role: "lojista", // ✅ SEMPRE lojista
-      segmento: String(segmento || "").trim()
-      
+      role: "lojista", // SEMPRE lojista
+      segmento: String(segmento || "").trim(),
     };
 
     users.push(newUser);
@@ -106,7 +104,7 @@ export const authService = {
       sub: newUser.idUsuario,
       email: newUser.email,
       role: newUser.role,
-      exp: Date.now() + 1000 * 60 * 60 // 1h
+      exp: Date.now() + 1000 * 60 * 60, // 1h
     });
 
     const safeUser = {
@@ -115,7 +113,7 @@ export const authService = {
       email: newUser.email,
       role: newUser.role,
       cpf: newUser.cpf,
-      segmento: newUser.segmento
+      segmento: newUser.segmento,
     };
 
     this.setSession({ user: safeUser, token });
@@ -138,7 +136,7 @@ export const authService = {
       sub: user.idUsuario,
       email: user.email,
       role: user.role,
-      exp: Date.now() + 1000 * 60 * 60 // 1h
+      exp: Date.now() + 1000 * 60 * 60, // 1h
     });
 
     const safeUser = {
@@ -146,11 +144,11 @@ export const authService = {
       nome: user.nome,
       email: user.email,
       role: user.role,
-      cpf: user.cpf
+      cpf: user.cpf,
     };
 
     this.setSession({ user: safeUser, token });
 
     return { user: safeUser, token };
-  }
+  },
 };
