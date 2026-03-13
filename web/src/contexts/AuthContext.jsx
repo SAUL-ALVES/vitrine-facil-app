@@ -1,4 +1,6 @@
 ﻿import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../services/firebase";
 import { authService } from "../services/auth";
 
 const AuthContext = createContext(null);
@@ -9,40 +11,60 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session = authService.getSession();
-    if (session?.token && authService.isTokenValid(session.token)) {
-      setUser(session.user);
-      setToken(session.token);
-    } else {
-      authService.clearSession();
-      setUser(null);
-      setToken(null);
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser) {
+          setUser(null);
+          setToken(null);
+          setLoading(false);
+          return;
+        }
+
+        const session = await authService.getCurrentSession(firebaseUser);
+        setUser(session?.user || null);
+        setToken(session?.token || null);
+      } catch (error) {
+        console.error("Erro ao recuperar sessão do Firebase:", error);
+        setUser(null);
+        setToken(null);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
-  function register(data) {
-    const { user: u, token: t } = authService.register(data);
-    setUser(u);
-    setToken(t);
-    return { user: u, token: t };
+  async function register(data) {
+    const { user: newUser, token: newToken } = await authService.register(data);
+    setUser(newUser);
+    setToken(newToken);
+    return { user: newUser, token: newToken };
   }
 
-  function login(data) {
-    const { user: u, token: t } = authService.login(data);
-    setUser(u);
-    setToken(t);
-    return { user: u, token: t };
+  async function login(data) {
+    const { user: newUser, token: newToken } = await authService.login(data);
+    setUser(newUser);
+    setToken(newToken);
+    return { user: newUser, token: newToken };
   }
 
-  function logout() {
-    authService.clearSession();
+  async function logout() {
+    await authService.logout();
     setUser(null);
     setToken(null);
   }
 
   const value = useMemo(
-    () => ({ user, token, loading, isAuthenticated: !!user && !!token, login, register, logout }),
+    () => ({
+      user,
+      token,
+      loading,
+      isAuthenticated: !!user,
+      login,
+      register,
+      logout,
+    }),
     [user, token, loading]
   );
 

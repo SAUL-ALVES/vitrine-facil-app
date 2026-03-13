@@ -2,10 +2,8 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { api } from "../../services/api.js";
+import { uploadProdutoImagem } from "../../services/storage.js";
 import {
-  Bell,
-  Printer,
-  Settings,
   Search,
   Plus,
   Package,
@@ -14,7 +12,6 @@ import {
   Store,
   Pencil,
   Trash2,
-  AlertTriangle,
   X,
 } from "lucide-react";
 import "./Estoque.css";
@@ -32,7 +29,6 @@ function getStockStatus(prod) {
   return "ok";
 }
 
-// ... Manter o componente <ProductModal> idêntico ao que você me enviou ...
 function ProductModal({
   open,
   onClose,
@@ -40,7 +36,6 @@ function ProductModal({
   initialData = null,
   mode = "create",
 }) {
-  // (Cole aqui o conteúdo original da função ProductModal sem alterações)
   const fileInputRef = useRef(null);
 
   const emptyForm = {
@@ -56,12 +51,15 @@ function ProductModal({
     min: "",
     max: "",
     imagem: "",
+    imageFile: null,
   };
+
   const [form, setForm] = useState(emptyForm);
   const [selectedImageName, setSelectedImageName] = useState("");
 
   useEffect(() => {
     if (!open) return;
+
     if (initialData) {
       setForm({
         id: initialData.id ?? null,
@@ -76,6 +74,7 @@ function ProductModal({
         min: String(initialData.min ?? 0),
         max: String(initialData.max ?? 0),
         imagem: initialData.imagem ?? "",
+        imageFile: null,
       });
       setSelectedImageName("");
     } else {
@@ -103,6 +102,7 @@ function ProductModal({
   function handleSubmit(e) {
     e.preventDefault();
     if (!canSubmit) return;
+
     onSubmit({
       ...form,
       categoria: form.categoria?.trim() || "Sem categoria",
@@ -113,15 +113,21 @@ function ProductModal({
       min: Number(form.min || 0),
       max: Number(form.max || 0),
       imagem: form.imagem || PLACEHOLDER_IMG,
+      imageFile: form.imageFile || null,
     });
   }
 
   function onPickImage(file) {
     if (!file) return;
     if (!file.type?.startsWith("image/")) return;
+
     const reader = new FileReader();
     reader.onload = () => {
-      setField("imagem", String(reader.result || ""));
+      setForm((prev) => ({
+        ...prev,
+        imagem: String(reader.result || ""),
+        imageFile: file,
+      }));
       setSelectedImageName(file.name || "imagem selecionada");
     };
     reader.readAsDataURL(file);
@@ -139,8 +145,8 @@ function ProductModal({
   const imageStatusText = selectedImageName
     ? `Nova imagem selecionada: ${selectedImageName}`
     : hasCurrentImage
-    ? "Imagem atual carregada"
-    : "Nenhuma imagem selecionada";
+      ? "Imagem atual carregada"
+      : "Nenhuma imagem selecionada";
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -176,6 +182,7 @@ function ProductModal({
               />
             </label>
           </div>
+
           <label>
             <span>Descrição</span>
             <textarea
@@ -184,6 +191,7 @@ function ProductModal({
               onChange={(e) => setField("descricao", e.target.value)}
             />
           </label>
+
           <div className="grid-2">
             <label>
               <span>Categoria</span>
@@ -200,6 +208,7 @@ function ProductModal({
               />
             </label>
           </div>
+
           <div className="grid-2">
             <label>
               <span>Preço de Venda (R$)</span>
@@ -224,7 +233,9 @@ function ProductModal({
               />
             </label>
           </div>
+
           <div className="stock-group-title">Regras de Estoque</div>
+
           <div className="grid-3">
             <label>
               <span>Estoque Atual</span>
@@ -257,6 +268,7 @@ function ProductModal({
               />
             </label>
           </div>
+
           <label>
             <span>Imagem do Produto</span>
             <input
@@ -311,6 +323,7 @@ function ProductModal({
               </span>
             </div>
           </label>
+
           <div className="modal-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>
               Cancelar
@@ -328,7 +341,7 @@ function ProductModal({
 export default function Estoque() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userId = user?.idUsuario || user?.id || user?.sub || "anon";
+  const userId = user?.idUsuario || user?.id || user?.sub || null;
 
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
@@ -340,6 +353,11 @@ export default function Estoque() {
 
   async function carregarProdutos() {
     try {
+      if (!userId) {
+        setProducts([]);
+        return;
+      }
+
       const data = await api.getProdutos(userId);
       setProducts(data);
     } catch (err) {
@@ -355,6 +373,7 @@ export default function Estoque() {
     () => ["Todas", ...Array.from(new Set(products.map((p) => p.categoria)))],
     [products]
   );
+
   const stats = useMemo(() => {
     return {
       total: products.length,
@@ -369,6 +388,7 @@ export default function Estoque() {
 
   const filtered = useMemo(() => {
     let list = [...products];
+
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter(
@@ -377,8 +397,11 @@ export default function Estoque() {
           (p.sku || "").toLowerCase().includes(q)
       );
     }
-    if (categoria !== "Todas")
+
+    if (categoria !== "Todas") {
       list = list.filter((p) => p.categoria === categoria);
+    }
+
     if (nivel !== "Todos") {
       list = list.filter((p) => {
         const s = getStockStatus(p);
@@ -388,35 +411,54 @@ export default function Estoque() {
         return true;
       });
     }
-    if (ordenacao === "nome") list.sort((a, b) => a.nome.localeCompare(b.nome));
-    else if (ordenacao === "estoque")
+
+    if (ordenacao === "nome") {
+      list.sort((a, b) => a.nome.localeCompare(b.nome));
+    } else if (ordenacao === "estoque") {
       list.sort((a, b) => Number(a.estoque || 0) - Number(b.estoque || 0));
+    }
+
     return list;
   }, [products, query, categoria, nivel, ordenacao]);
 
   async function handleCreateOrUpdateProduct(formProduct) {
     try {
+      let imagemFinal = formProduct.imagem || PLACEHOLDER_IMG;
+
+      if (formProduct.imageFile) {
+        imagemFinal = await uploadProdutoImagem(formProduct.imageFile, userId);
+      }
+
+      const payload = {
+        ...formProduct,
+        imagem: imagemFinal,
+      };
+
+      delete payload.imageFile;
+
       if (editingProduct) {
         await api.updateProduto(editingProduct.id, {
           ...editingProduct,
-          ...formProduct,
+          ...payload,
         });
       } else {
         const safeSku =
-          (formProduct.sku || "").trim() ||
-          `SKU-${String(Date.now()).slice(-6)}`;
+          (formProduct.sku || "").trim() || `SKU-${String(Date.now()).slice(-6)}`;
+
         await api.addProduto({
-          ...formProduct,
+          ...payload,
           id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
           sku: safeSku,
-          userId, // MUITO IMPORTANTE: Salvar quem é o dono do produto
+          userId,
           createdAt: Date.now(),
         });
       }
-      await carregarProdutos(); // Recarrega da API
+
+      await carregarProdutos();
       setModalOpen(false);
-    } catch (e) {
-      alert("Erro ao salvar o produto");
+    } catch (error) {
+      console.error(error);
+      alert(error?.message || "Erro ao salvar o produto no Firebase.");
     }
   }
 
@@ -431,10 +473,12 @@ export default function Estoque() {
     setEditingProduct(null);
     setModalOpen(true);
   }
+
   function handleOpenEdit(product) {
     setEditingProduct(product);
     setModalOpen(true);
   }
+
   function handleCloseModal() {
     setModalOpen(false);
     setEditingProduct(null);
@@ -448,6 +492,7 @@ export default function Estoque() {
           <span className="estoque-brand-name">VitrineFácil</span>
         </div>
       </header>
+
       <main className="estoque-content">
         <section className="stats-grid">
           <div className="stat-card">
@@ -509,6 +554,7 @@ export default function Estoque() {
                 const status = getStockStatus(p);
                 const margem =
                   p.preco > 0 ? ((p.preco - p.custo) / p.preco) * 100 : 0;
+
                 return (
                   <article
                     key={p.id}
@@ -525,6 +571,7 @@ export default function Estoque() {
                         </div>
                       </div>
                     </div>
+
                     <div className="product-grid">
                       <div className="product-cell">
                         <span className="cell-label">Estoque</span>
@@ -545,6 +592,7 @@ export default function Estoque() {
                         </strong>
                       </div>
                     </div>
+
                     <div className="product-side">
                       <div className="product-actions">
                         <button

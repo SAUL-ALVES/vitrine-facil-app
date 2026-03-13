@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Compass, Sparkles, MapPin, User, Star, ArrowRight, Store as StoreIcon } from 'lucide-react';
-import { firebaseService } from '../../services/firebaseService';
+import { firebaseService } from '../../services/firebase';
 import './Vitrine.css';
 
 const PLACEHOLDER_COVER = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
