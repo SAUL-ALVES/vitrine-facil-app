@@ -1,7 +1,7 @@
 :root {
   --vf-primary: #0a7b6c;
   --vf-primary-dark: #075a4f;
-  --vf-primary-light: #e6f2f0;
+  --vf-primary-light: #9cf0e2;
   --vf-bg: #f4f6f8;
   --vf-card-bg: #ffffff;
   --vf-text-main: #1a1d20;
@@ -37,6 +37,9 @@
 }
 .text-white {
   color: white;
+}
+.text-green-light {
+  color: var(--vf-primary-light);
 }
 .fw-bold {
   font-weight: bold;
@@ -386,6 +389,9 @@
 .nav-item.active span {
   color: var(--vf-primary);
   font-weight: 800;
+}
+.action-card.primary-action .action-title {
+  color: var(--vf-primary-light);
 }
 
 /* Responsivo */

@@ -1,154 +1,125 @@
-﻿const SESSION_KEY = "vf_session";
-const USERS_KEY = "vf_users";
+﻿import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
-/**
- * JWT mock: header.payload.signature (payload base64 com exp + role)
- * Sem segurança real (somente para front mockado).
- */
-function b64(obj) {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-}
-function b64parse(str) {
-  return JSON.parse(decodeURIComponent(escape(atob(str))));
-}
-function makeToken(payload) {
-  const header = b64({ alg: "none", typ: "JWT" });
-  const body = b64(payload);
-  return `${header}.${body}.`;
-}
-function decodeToken(token) {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-  return b64parse(parts[1]);
-}
+function traduzirErroFirebase(error) {
+  const code = error?.code || "";
 
-function loadUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-  } catch {
-    return [];
+  switch (code) {
+    case "auth/email-already-in-use":
+      return "Esse email já está cadastrado.";
+    case "auth/invalid-email":
+      return "Email inválido.";
+    case "auth/weak-password":
+      return "Senha deve ter no mínimo 6 caracteres.";
+    case "auth/invalid-credential":
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+      return "Email ou senha inválidos.";
+    default:
+      return error?.message || "Ocorreu um erro ao autenticar.";
   }
 }
-function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+async function montarUsuarioSeguro(firebaseUser) {
+  const ref = doc(db, "usuarios", firebaseUser.uid);
+  const snap = await getDoc(ref);
+  const extra = snap.exists() ? snap.data() : {};
+
+  return {
+    idUsuario: firebaseUser.uid,
+    nome: extra.nome ?? firebaseUser.displayName ?? "",
+    email: firebaseUser.email ?? "",
+    role: extra.role ?? "lojista",
+    cpf: extra.cpf ?? "",
+    segmento: extra.segmento ?? "",
+  };
 }
 
 export const authService = {
-  getSession() {
+  async register({ nome, cpf, email, senha, segmento }) {
     try {
-      return JSON.parse(localStorage.getItem(SESSION_KEY));
-    } catch {
-      return null;
+      if (!nome || !cpf || !email || !senha || !segmento) {
+        throw new Error("Preencha todos os campos.");
+      }
+
+      const cpfClean = String(cpf).replace(/\D/g, "");
+      if (cpfClean.length !== 11) {
+        throw new Error("CPF inválido (11 dígitos).");
+      }
+
+      const emailLower = String(email).trim().toLowerCase();
+      if (!emailLower.includes("@")) {
+        throw new Error("Email inválido.");
+      }
+
+      if (String(senha).length < 6) {
+        throw new Error("Senha deve ter no mínimo 6 caracteres.");
+      }
+
+      const cred = await createUserWithEmailAndPassword(auth, emailLower, senha);
+
+      await updateProfile(cred.user, { displayName: nome.trim() });
+
+      await setDoc(
+        doc(db, "usuarios", cred.user.uid),
+        {
+          idUsuario: cred.user.uid,
+          nome: nome.trim(),
+          cpf: cpfClean,
+          email: emailLower,
+          role: "lojista",
+          segmento: String(segmento).trim(),
+          createdAt: Date.now(),
+        },
+        { merge: true }
+      );
+
+      const user = await montarUsuarioSeguro(cred.user);
+      const token = await cred.user.getIdToken();
+
+      return { user, token };
+    } catch (error) {
+      throw new Error(traduzirErroFirebase(error));
     }
   },
 
-  setSession(session) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  },
-
-  clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-  },
-
-  isTokenValid(token) {
+  async login({ email, senha }) {
     try {
-      const payload = decodeToken(token);
-      if (!payload?.exp) return false;
-      return Date.now() < payload.exp;
-    } catch {
-      return false;
+      if (!email || !senha) {
+        throw new Error("Informe email e senha.");
+      }
+
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        String(email).trim().toLowerCase(),
+        senha
+      );
+
+      const user = await montarUsuarioSeguro(cred.user);
+      const token = await cred.user.getIdToken();
+
+      return { user, token };
+    } catch (error) {
+      throw new Error(traduzirErroFirebase(error));
     }
   },
 
-  // AGORA register NÃO recebe role e sempre cadastra como lojista
-  register({ nome, cpf, email, senha, segmento }) {
-    if (!nome || !cpf || !email || !senha || !segmento) {
-      throw new Error("Preencha todos os campos.");
-    }
-
-    const users = loadUsers();
-
-    const cpfClean = String(cpf).replace(/\D/g, "");
-    if (cpfClean.length !== 11) throw new Error("CPF inválido (11 dígitos).");
-
-    const emailLower = String(email).trim().toLowerCase();
-    if (!emailLower.includes("@")) throw new Error("Email inválido.");
-
-    if (senha.length < 6)
-      throw new Error("Senha deve ter no mínimo 6 caracteres.");
-
-    if (users.some((u) => u.email === emailLower)) {
-      throw new Error("Esse email já está cadastrado.");
-    }
-    if (users.some((u) => u.cpf === cpfClean)) {
-      throw new Error("Esse CPF já está cadastrado.");
-    }
-    if (!segmento || !String(segmento).trim()) {
-      throw new Error("Selecione o segmento do lojista.");
-    }
-
-    const newUser = {
-      idUsuario: crypto.randomUUID(),
-      nome,
-      cpf: cpfClean,
-      email: emailLower,
-      senha, // mock (não hash)
-      role: "lojista", // SEMPRE lojista
-      segmento: String(segmento || "").trim(),
-    };
-
-    users.push(newUser);
-    saveUsers(users);
-
-    const token = makeToken({
-      sub: newUser.idUsuario,
-      email: newUser.email,
-      role: newUser.role,
-      exp: Date.now() + 1000 * 60 * 60, // 1h
-    });
-
-    const safeUser = {
-      idUsuario: newUser.idUsuario,
-      nome: newUser.nome,
-      email: newUser.email,
-      role: newUser.role,
-      cpf: newUser.cpf,
-      segmento: newUser.segmento,
-    };
-
-    this.setSession({ user: safeUser, token });
-
-    return { user: safeUser, token };
+  async logout() {
+    await signOut(auth);
   },
 
-  login({ email, senha }) {
-    if (!email || !senha) throw new Error("Informe email e senha.");
+  async getCurrentSession(firebaseUser = auth.currentUser) {
+    if (!firebaseUser) return null;
 
-    const users = loadUsers();
-    const emailLower = String(email).trim().toLowerCase();
-    const user = users.find((u) => u.email === emailLower);
+    const user = await montarUsuarioSeguro(firebaseUser);
+    const token = await firebaseUser.getIdToken();
 
-    if (!user || user.senha !== senha) {
-      throw new Error("Email ou senha inválidos.");
-    }
-
-    const token = makeToken({
-      sub: user.idUsuario,
-      email: user.email,
-      role: user.role,
-      exp: Date.now() + 1000 * 60 * 60, // 1h
-    });
-
-    const safeUser = {
-      idUsuario: user.idUsuario,
-      nome: user.nome,
-      email: user.email,
-      role: user.role,
-      cpf: user.cpf,
-    };
-
-    this.setSession({ user: safeUser, token });
-
-    return { user: safeUser, token };
+    return { user, token };
   },
 };

@@ -1,50 +1,154 @@
-const API_URL = "http://localhost:3001";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  runTransaction,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "./firebase";
+
+const produtosRef = collection(db, "produtos");
+const pedidosRef = collection(db, "pedidos");
+
+function ordenarPorDataDesc(lista, campo = "createdAt") {
+  return [...lista].sort((a, b) => Number(b?.[campo] || 0) - Number(a?.[campo] || 0));
+}
 
 export const api = {
-  // --- PRODUTOS ---
-  getProdutos: async (userId) => {
-    const res = await fetch(`${API_URL}/produtos?userId=${userId}`);
-    return res.json();
-  },
-  addProduto: async (produto) => {
-    const res = await fetch(`${API_URL}/produtos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(produto),
-    });
-    return res.json();
-  },
-  updateProduto: async (id, produto) => {
-    const res = await fetch(`${API_URL}/produtos/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(produto),
-    });
-    return res.json();
-  },
-  deleteProduto: async (id) => {
-    await fetch(`${API_URL}/produtos/${id}`, { method: "DELETE" });
+  async getProdutos(userId) {
+    if (!userId) return [];
+
+    const q = query(produtosRef, where("userId", "==", userId));
+    const snap = await getDocs(q);
+    const data = snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+    return ordenarPorDataDesc(data, "createdAt");
   },
 
-  // --- PEDIDOS (VENDAS) ---
-  getPedidos: async (userId) => {
-    const res = await fetch(`${API_URL}/pedidos?userId=${userId}`);
-    return res.json();
+  async addProduto(produto) {
+    if (!produto?.userId) {
+      throw new Error("Usuário não autenticado.");
+    }
+
+    const id =
+      produto.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+    const payload = {
+      ...produto,
+      id,
+      createdAt: produto.createdAt || Date.now(),
+    };
+
+    await setDoc(doc(db, "produtos", id), payload, { merge: true });
+    return payload;
   },
-  addPedido: async (pedido) => {
-    const res = await fetch(`${API_URL}/pedidos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pedido),
-    });
-    return res.json();
+
+  async updateProduto(id, produto) {
+    const payload = {
+      ...produto,
+      id,
+      updatedAt: Date.now(),
+    };
+
+    await setDoc(doc(db, "produtos", id), payload, { merge: true });
+    return payload;
   },
-  updatePedido: async (id, pedido) => {
-    const res = await fetch(`${API_URL}/pedidos/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pedido),
+
+  async deleteProduto(id) {
+    await deleteDoc(doc(db, "produtos", id));
+  },
+
+  async getPedidos(userId) {
+    if (!userId) return [];
+
+    const q = query(pedidosRef, where("userId", "==", userId));
+    const snap = await getDocs(q);
+    const data = snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+    return ordenarPorDataDesc(data, "createdAt");
+  },
+
+  async addPedido(pedido) {
+    if (!pedido?.userId) {
+      throw new Error("Usuário não autenticado.");
+    }
+
+    const id =
+      pedido.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+    const payload = {
+      ...pedido,
+      id,
+      createdAt: pedido.createdAt || Date.now(),
+      status: pedido.status || "Pendente",
+    };
+
+    await setDoc(doc(db, "pedidos", id), payload, { merge: true });
+    return payload;
+  },
+
+  async updatePedido(id, pedido) {
+    const payload = {
+      ...pedido,
+      id,
+      updatedAt: Date.now(),
+    };
+
+    await setDoc(doc(db, "pedidos", id), payload, { merge: true });
+    return payload;
+  },
+
+  async finalizarVenda({ userId, carrinho, nomeCliente, telefoneCliente, totalCarrinho }) {
+    if (!userId) {
+      throw new Error("Usuário não autenticado.");
+    }
+
+    if (!Array.isArray(carrinho) || carrinho.length === 0) {
+      throw new Error("Carrinho vazio.");
+    }
+
+    const pedidoRef = doc(collection(db, "pedidos"));
+
+    await runTransaction(db, async (transaction) => {
+      for (const item of carrinho) {
+        const produtoRef = doc(db, "produtos", item.id);
+        const produtoSnap = await transaction.get(produtoRef);
+
+        if (!produtoSnap.exists()) {
+          throw new Error(`Produto não encontrado: ${item.nome}`);
+        }
+
+        const produtoAtual = produtoSnap.data();
+        const estoqueAtual = Number(produtoAtual.estoque || 0);
+        const quantidadeVendida = Number(item.qtd || 0);
+        const novoEstoque = estoqueAtual - quantidadeVendida;
+
+        if (novoEstoque < 0) {
+          throw new Error(`Estoque insuficiente para ${item.nome}`);
+        }
+
+        transaction.update(produtoRef, {
+          estoque: novoEstoque,
+          updatedAt: Date.now(),
+        });
+      }
+
+      transaction.set(pedidoRef, {
+        id: pedidoRef.id,
+        userId,
+        data: new Date().toISOString(),
+        createdAt: Date.now(),
+        status: "Pendente",
+        cliente: {
+          nome: nomeCliente || "",
+          telefone: telefoneCliente || "",
+        },
+        itens: carrinho,
+        total: totalCarrinho,
+      });
     });
-    return res.json();
+
+    return { id: pedidoRef.id };
   },
 };

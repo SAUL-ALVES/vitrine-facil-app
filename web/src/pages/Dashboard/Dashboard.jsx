@@ -16,11 +16,9 @@ import "./Dashboard.css";
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userId = user?.idUsuario || user?.id || user?.sub || "anon";
+  const userId = user?.idUsuario || user?.id || user?.sub || null;
 
-  const userInitials = user?.nome
-    ? user.nome.substring(0, 2).toUpperCase()
-    : "VF";
+  const userInitials = user?.nome ? user.nome.substring(0, 2).toUpperCase() : "VF";
 
   const [produtos, setProdutos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
@@ -32,31 +30,27 @@ export default function Dashboard() {
         const peds = await api.getPedidos(userId);
         setProdutos(prods);
         setPedidos(peds);
-      } catch (e) {
-        console.error("Erro ao conectar com db.json", e);
+      } catch (error) {
+        console.error("Erro ao conectar com o Firebase", error);
       }
     }
+
     carregarDados();
   }, [userId]);
 
   const totalProdutos = produtos.length;
-
-  // Cálculos Financeiros
-  const hoje = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-
-  const vendasDeHoje = pedidos.filter((p) => p.data.startsWith(hoje));
-
-  const receitaHoje = vendasDeHoje.reduce((acc, p) => acc + p.total, 0);
+  const hoje = new Date().toISOString().split("T")[0];
+  const vendasDeHoje = pedidos.filter((p) => String(p.data || "").startsWith(hoje));
+  const receitaHoje = vendasDeHoje.reduce((acc, p) => acc + Number(p.total || 0), 0);
 
   const lucroHoje = vendasDeHoje.reduce((accPedido, pedido) => {
-    const lucroDoPedido = pedido.itens.reduce((accItem, item) => {
-      const margem = item.preco - (item.custo || 0);
-      return accItem + margem * item.qtd;
+    const lucroDoPedido = (pedido.itens || []).reduce((accItem, item) => {
+      const margem = Number(item.preco || 0) - Number(item.custo || 0);
+      return accItem + margem * Number(item.qtd || 0);
     }, 0);
     return accPedido + lucroDoPedido;
   }, 0);
 
-  // Lógica do Gráfico de Barras (Últimos 5 dias)
   const ultimos5Dias = Array.from({ length: 5 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (4 - i));
@@ -66,12 +60,12 @@ export default function Dashboard() {
         ? "Hoje"
         : d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
     const totalDia = pedidos
-      .filter((p) => p.data.startsWith(dataStr))
-      .reduce((acc, p) => acc + p.total, 0);
+      .filter((p) => String(p.data || "").startsWith(dataStr))
+      .reduce((acc, p) => acc + Number(p.total || 0), 0);
     return { label: nomeDia, total: totalDia, isToday: i === 4 };
   });
 
-  const maiorVenda = Math.max(...ultimos5Dias.map((d) => d.total));
+  const maiorVenda = Math.max(...ultimos5Dias.map((d) => d.total), 0);
   const temVendasNaSemana = maiorVenda > 0;
 
   return (
@@ -100,13 +94,12 @@ export default function Dashboard() {
                 <DollarSign size={16} />
                 <span>Entrou Hoje</span>
               </div>
-              <div className="insight-value">
-                R$ {receitaHoje.toFixed(2).replace(".", ",")}
-              </div>
+              <div className="insight-value">R$ {receitaHoje.toFixed(2).replace(".", ",")}</div>
               <div className="insight-trend">
                 <span>{vendasDeHoje.length} venda(s) realizada(s)</span>
               </div>
             </div>
+
             <div className="insight-card">
               <div className="insight-header">
                 <TrendingUp size={16} className="text-green" />
@@ -125,9 +118,7 @@ export default function Dashboard() {
         <section className="dashboard-section">
           <h2 className="section-title">Vendas da Semana</h2>
           <div
-            className={`chart-card ${
-              !temVendasNaSemana ? "chart-empty-state" : ""
-            }`}
+            className={`chart-card ${!temVendasNaSemana ? "chart-empty-state" : ""}`}
             style={{ paddingBottom: "40px", position: "relative" }}
           >
             {!temVendasNaSemana ? (
@@ -150,8 +141,8 @@ export default function Dashboard() {
                 }}
               >
                 {ultimos5Dias.map((dia, i) => {
-                  const altura =
-                    maiorVenda > 0 ? (dia.total / maiorVenda) * 100 : 0;
+                  const altura = maiorVenda > 0 ? (dia.total / maiorVenda) * 100 : 0;
+
                   return (
                     <div
                       key={i}
@@ -171,6 +162,7 @@ export default function Dashboard() {
                           R${dia.total}
                         </span>
                       )}
+
                       <div
                         className={`bar ${dia.isToday ? "today" : ""}`}
                         style={{
@@ -204,12 +196,7 @@ export default function Dashboard() {
               }}
             >
               {ultimos5Dias.map((dia, i) => (
-                <span
-                  key={i}
-                  style={
-                    dia.isToday ? { fontWeight: "bold", color: "#374151" } : {}
-                  }
-                >
+                <span key={i} style={dia.isToday ? { fontWeight: "bold", color: "#374151" } : {}}>
                   {dia.label}
                 </span>
               ))}
@@ -225,8 +212,9 @@ export default function Dashboard() {
               onClick={() => navigate("/caixa")}
             >
               <ShoppingCart size={34} className="action-icon text-white" />
-              <span className="action-title text-white">Nova Venda</span>
+              <span className="action-title text-green">Nova Venda</span>
             </button>
+
             <button
               className="action-card"
               type="button"
@@ -245,9 +233,7 @@ export default function Dashboard() {
           <div className="alert-list">
             <div
               className="alert-item"
-              style={{
-                borderLeftColor: totalProdutos > 0 ? "#0A7B6C" : "#f59e0b",
-              }}
+              style={{ borderLeftColor: totalProdutos > 0 ? "#0A7B6C" : "#f59e0b" }}
             >
               <div className="alert-content">
                 <span className="product-name">
@@ -258,9 +244,7 @@ export default function Dashboard() {
               </div>
               <button
                 type="button"
-                className={`stock-badge ${
-                  totalProdutos > 0 ? "ready" : "danger"
-                }`}
+                className={`stock-badge ${totalProdutos > 0 ? "ready" : "danger"}`}
                 onClick={() => navigate("/estoque")}
               >
                 {totalProdutos === 0 ? "Adicionar" : "Ver Estoque"}

@@ -24,12 +24,11 @@ const PLACEHOLDER_IMG = "https://placehold.net/600x400.png";
 export default function Caixa() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userId = user?.idUsuario || user?.id || user?.sub || "anon";
+  const userId = user?.idUsuario || user?.id || user?.sub || null;
 
   const [produtos, setProdutos] = useState([]);
   const [busca, setBusca] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
-
   const [carrinho, setCarrinho] = useState([]);
   const [nomeCliente, setNomeCliente] = useState("");
   const [telefoneCliente, setTelefoneCliente] = useState("");
@@ -39,6 +38,7 @@ export default function Caixa() {
       const data = await api.getProdutos(userId);
       setProdutos(data);
     }
+
     load();
   }, [userId]);
 
@@ -49,9 +49,7 @@ export default function Caixa() {
 
   const produtosFiltrados = useMemo(() => {
     return produtos.filter((p) => {
-      const matchBusca = (p.nome || "")
-        .toLowerCase()
-        .includes(busca.toLowerCase());
+      const matchBusca = (p.nome || "").toLowerCase().includes(busca.toLowerCase());
       const matchCat =
         categoriaAtiva === "Todos" ||
         (p.categoria || "Sem categoria") === categoriaAtiva;
@@ -64,6 +62,7 @@ export default function Caixa() {
       alert("Produto sem estoque!");
       return;
     }
+
     setCarrinho((prev) => {
       const existe = prev.find((item) => item.id === produto.id);
       if (existe) {
@@ -85,7 +84,7 @@ export default function Caixa() {
         if (item.id === id) {
           const prodDb = produtos.find((p) => p.id === id);
           const novaQtd = item.qtd + delta;
-          if (novaQtd > prodDb?.estoque) {
+          if (novaQtd > (prodDb?.estoque || 0)) {
             alert("Estoque máximo atingido!");
             return item;
           }
@@ -100,38 +99,21 @@ export default function Caixa() {
     setCarrinho((prev) => prev.filter((item) => item.id !== id));
   }
 
-  const totalCarrinho = carrinho.reduce(
-    (acc, item) => acc + item.preco * item.qtd,
-    0
-  );
+  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.preco * item.qtd, 0);
 
   async function finalizarVenda() {
     if (carrinho.length === 0) return;
 
     try {
-      const novoPedido = {
-        id: crypto.randomUUID(),
+      await api.finalizarVenda({
         userId,
-        data: new Date().toISOString(),
-        cliente: { nome: nomeCliente, telefone: telefoneCliente },
-        itens: carrinho,
-        total: totalCarrinho,
-      };
-      await api.addPedido(novoPedido);
+        carrinho,
+        nomeCliente,
+        telefoneCliente,
+        totalCarrinho,
+      });
 
-      for (const item of carrinho) {
-        const prodDb = produtos.find((p) => p.id === item.id);
-        if (prodDb) {
-          const novoEstoque = Math.max(0, prodDb.estoque - item.qtd);
-          await api.updateProduto(item.id, { ...prodDb, estoque: novoEstoque });
-        }
-      }
-
-      alert(
-        `Venda finalizada!\nTotal: R$ ${totalCarrinho
-          .toFixed(2)
-          .replace(".", ",")}`
-      );
+      alert(`Venda finalizada!\nTotal: R$ ${totalCarrinho.toFixed(2).replace(".", ",")}`);
 
       setCarrinho([]);
       setNomeCliente("");
@@ -140,9 +122,7 @@ export default function Caixa() {
       setProdutos(atualizados);
     } catch (err) {
       console.error(err);
-      alert(
-        "Erro ao finalizar venda. Verifique se o json-server está rodando."
-      );
+      alert(err?.message || "Erro ao finalizar venda no Firebase.");
     }
   }
 
@@ -184,13 +164,10 @@ export default function Caixa() {
               {categorias.map((cat) => (
                 <button
                   key={cat}
-                  className={`chip-btn ${
-                    categoriaAtiva === cat ? "active" : ""
-                  }`}
+                  className={`chip-btn ${categoriaAtiva === cat ? "active" : ""}`}
                   onClick={() => setCategoriaAtiva(cat)}
                 >
-                  {categoriaAtiva === cat && <LayoutDashboard size={14} />}{" "}
-                  {cat}
+                  {categoriaAtiva === cat && <LayoutDashboard size={14} />} {cat}
                 </button>
               ))}
             </div>
@@ -201,10 +178,7 @@ export default function Caixa() {
               <div className="empty-state">Nenhum produto encontrado.</div>
             ) : (
               produtosFiltrados.map((p) => {
-                // VERIFICA SE O PRODUTO ESTÁ NO CARRINHO
-                const itemNoCarrinho = carrinho.find(
-                  (item) => item.id === p.id
-                );
+                const itemNoCarrinho = carrinho.find((item) => item.id === p.id);
                 const qtdCarrinho = itemNoCarrinho ? itemNoCarrinho.qtd : 0;
 
                 return (
@@ -215,25 +189,16 @@ export default function Caixa() {
                     disabled={p.estoque <= 0}
                     style={{ opacity: p.estoque <= 0 ? 0.5 : 1 }}
                   >
-                    {/* BOLINHA DE NOTIFICAÇÃO DO CARRINHO */}
-                    {qtdCarrinho > 0 && (
-                      <span className="produto-badge-qtd">{qtdCarrinho}</span>
-                    )}
+                    {qtdCarrinho > 0 && <span className="produto-badge-qtd">{qtdCarrinho}</span>}
 
-                    <img
-                      src={p.imagem || PLACEHOLDER_IMG}
-                      alt={p.nome}
-                      className="produto-img"
-                    />
+                    <img src={p.imagem || PLACEHOLDER_IMG} alt={p.nome} className="produto-img" />
                     <h3 className="produto-nome">{p.nome}</h3>
                     <strong className="produto-preco">
                       R$ {Number(p.preco).toFixed(2).replace(".", ",")}
                     </strong>
                     <span
                       className="produto-estoque"
-                      style={{
-                        color: p.estoque <= 0 ? "var(--vf-red)" : "inherit",
-                      }}
+                      style={{ color: p.estoque <= 0 ? "var(--vf-red)" : "inherit" }}
                     >
                       Estoque: {p.estoque || 0}
                     </span>
@@ -247,8 +212,7 @@ export default function Caixa() {
         <aside className="checkout-section">
           <div className="carrinho-panel card-panel">
             <h2 className="panel-title">
-              <ShoppingCart size={20} /> Carrinho (
-              {carrinho.reduce((a, b) => a + b.qtd, 0)})
+              <ShoppingCart size={20} /> Carrinho ({carrinho.reduce((a, b) => a + b.qtd, 0)})
             </h2>
             <div className="carrinho-items">
               {carrinho.length === 0 ? (
@@ -261,10 +225,7 @@ export default function Caixa() {
                   <div key={item.id} className="carrinho-item">
                     <div className="item-info">
                       <h4>{item.nome}</h4>
-                      <span>
-                        R${" "}
-                        {(item.preco * item.qtd).toFixed(2).replace(".", ",")}
-                      </span>
+                      <span>R$ {(item.preco * item.qtd).toFixed(2).replace(".", ",")}</span>
                     </div>
                     <div className="item-controls">
                       <button onClick={() => alterarQuantidade(item.id, -1)}>
@@ -274,10 +235,7 @@ export default function Caixa() {
                       <button onClick={() => alterarQuantidade(item.id, 1)}>
                         <Plus size={14} />
                       </button>
-                      <button
-                        className="btn-lixeira"
-                        onClick={() => removerDoCarrinho(item.id)}
-                      >
+                      <button className="btn-lixeira" onClick={() => removerDoCarrinho(item.id)}>
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -289,9 +247,7 @@ export default function Caixa() {
               <div className="carrinho-footer">
                 <div className="total-row">
                   <span>Total</span>
-                  <strong>
-                    R$ {totalCarrinho.toFixed(2).replace(".", ",")}
-                  </strong>
+                  <strong>R$ {totalCarrinho.toFixed(2).replace(".", ",")}</strong>
                 </div>
                 <button className="btn-finalizar" onClick={finalizarVenda}>
                   Finalizar Venda
@@ -299,6 +255,7 @@ export default function Caixa() {
               </div>
             )}
           </div>
+
           <div className="cliente-panel card-panel">
             <h2 className="panel-title">
               <User size={20} /> Cliente (Opcional)
