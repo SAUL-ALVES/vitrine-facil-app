@@ -11,8 +11,10 @@ import "./Pedidos.css";
 
 export default function Pedidos() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userId = user?.idUsuario || user?.id || user?.sub || "anon";
+  const userInitials = user?.nome ? user.nome.substring(0, 2).toUpperCase() : "VF";
+  const [showMenu, setShowMenu] = useState(false);
 
   const [pedidos, setPedidos] = useState([]);
   const [busca, setBusca] = useState("");
@@ -75,17 +77,75 @@ export default function Pedidos() {
     return `${data.toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })} às ${horaFormatada}`;
   }
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <div className="pedidos-page">
       <header className="top-header">
         <div className="logo-container">
           <div className="logo-badge">VF</div>
-          <span className="logo-text">Vitrine<span className="text-orange">Fácil</span></span>
+          <div className="logo-text-wrap">
+            <span className="logo-text">
+              Vitrine<span className="text-orange">Fácil</span>
+            </span>
+            <span className="logo-subtext">Histórico de pedidos</span>
+          </div>
         </div>
         <div className="header-actions">
           <button className="icon-btn"><Bell size={20} /></button>
           <button className="icon-btn text-red"><Printer size={20} /></button>
           <button className="icon-btn"><Settings size={20} /></button>
+          <div
+            className="user-avatar"
+            onClick={() => setShowMenu(!showMenu)}
+            style={{ cursor: "pointer", position: "relative" }}
+          >
+            {userInitials}
+            {showMenu && (
+              <div
+                className="context-menu"
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "6px",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  zIndex: 1000,
+                  minWidth: "150px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "12px 16px",
+                    textAlign: "left",
+                    border: "none",
+                    backgroundColor: "transparent",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#374151",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                >
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
