@@ -15,7 +15,7 @@ import "./Dashboard.css";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userId = user?.idUsuario || user?.id || user?.sub || null;
 
   const userInitials = user?.nome ? user.nome.substring(0, 2).toUpperCase() : "VF";
@@ -70,9 +70,14 @@ export default function Dashboard() {
 
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleLogout = () => {
-    // Implementar lógica de logout aqui
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+      navigate("/login", { replace: true });
+    }
   };
 
   return (
