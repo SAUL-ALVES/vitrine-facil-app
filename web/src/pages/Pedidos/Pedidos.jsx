@@ -5,7 +5,7 @@ import { api } from "../../services/api.js";
 import { 
   Search, Clock, CheckCircle, User, 
   LayoutDashboard, QrCode, Package, Store,
-  Bell, Printer, Settings, ChevronRight
+  Bell, Printer, Settings, ChevronRight, Plus
 } from "lucide-react";
 import "./Pedidos.css";
 
@@ -244,6 +244,16 @@ export default function Pedidos() {
           )}
         </section>
       </main>
+
+      <button
+        className="floating-add-btn"
+        type="button"
+        onClick={() => navigate("/caixa")}
+        aria-label="Nova venda"
+      >
+        <Plus size={18} />
+        <span>Nova venda</span>
+      </button>
 
       <nav className="bottom-nav">
         <button className="nav-item" type="button" onClick={() => navigate("/dashboard")}><div className="nav-icon-wrap"><LayoutDashboard size={22} /></div><span>Início</span></button>
