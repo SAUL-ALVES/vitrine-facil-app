@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
@@ -12,39 +12,68 @@ import Caixa from "../pages/Caixa/Caixa.jsx";
 import Pedidos from "../pages/Pedidos/Pedidos.jsx";
 import Vitrine from "../pages/Vitrine/Vitrine.jsx";
 
+function LoadingWithLogo() {
+  return (
+    <div className="loading-screen">
+      <div className="logo-container loading-logo-container">
+        <div className="logo-badge">VF</div>
+        <div className="logo-text-wrap">
+          <span className="logo-text">Vitrine<span className="text-orange">Fácil</span></span>
+          <span className="logo-subtext">Carregando...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PageLoader({ children }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 280);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded) {
+    return <LoadingWithLogo />;
+  }
+
+  return children;
+}
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <LoadingWithLogo />;
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <PageLoader>{children}</PageLoader>;
 }
 
 function PublicRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <LoadingWithLogo />;
   }
 
   if (isAuthenticated) {
     return <Navigate to="/home" replace />;
   }
 
-  return children;
+  return <PageLoader>{children}</PageLoader>;
 }
 
 export default function AppRoutes() {
   return (
     <Routes>
       {/* ROTA PRINCIPAL (PÚBLICA) */}
-      <Route path="/" element={<Vitrine />} />
+      <Route path="/" element={<PageLoader><Vitrine /></PageLoader>} />
 
       {/* ROTAS DO LOJISTA (PÚBLICAS) */}
       <Route path="/login" element={<PublicRoute><Home /></PublicRoute>} />
