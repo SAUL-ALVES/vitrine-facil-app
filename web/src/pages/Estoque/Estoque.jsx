@@ -476,13 +476,7 @@ export default function Estoque() {
               <Search size={20} />
               <h2>Busca e Filtros</h2>
             </div>
-            <button
-              className="primary-btn"
-              type="button"
-              onClick={handleOpenCreate}
-            >
-              <Plus size={18} /> Adicionar Produto
-            </button>
+            
           </div>
           <div className="filters-body">
             <div className="search-input-wrap">
@@ -570,6 +564,32 @@ export default function Estoque() {
           </div>
         </section>
       </main>
+
+      {/* Botão flutuante (Floating Action Button) */}
+      <button
+        type="button"
+        onClick={handleOpenCreate}
+        aria-label="Adicionar Produto"
+        style={{
+          position: "fixed",
+          right: 20,
+          bottom: 90,
+          zIndex: 1000,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#06b6d4",
+          color: "#ffffff",
+          border: "none",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+          cursor: "pointer",
+        }}
+      >
+        <Plus size={22} />
+      </button>
 
       <nav className="bottom-nav">
         <button
