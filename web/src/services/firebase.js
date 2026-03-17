@@ -1,12 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import {
-  collection,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -27,8 +21,7 @@ export const storage = getStorage(app);
 export const firebaseService = {
   async getLojas() {
     try {
-      const q = query(collection(db, "usuarios"), where("role", "==", "lojista"));
-      const snap = await getDocs(q);
+      const snap = await getDocs(collection(db, "lojas"));
 
       return snap.docs.map((docItem) => {
         const data = docItem.data() || {};

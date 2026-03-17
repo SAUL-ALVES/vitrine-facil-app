@@ -81,7 +81,7 @@ export const api = {
       ...pedido,
       id,
       createdAt: pedido.createdAt || Date.now(),
-      status: pedido.status || "Pendente",
+      status: pedido.status || "Concluído",
     };
 
     await setDoc(doc(db, "pedidos", id), payload, { merge: true });
@@ -99,7 +99,15 @@ export const api = {
     return payload;
   },
 
-  async finalizarVenda({ userId, carrinho, nomeCliente, telefoneCliente, totalCarrinho }) {
+  async finalizarVenda({
+    userId,
+    carrinho,
+    nomeCliente,
+    telefoneCliente,
+    totalCarrinho,
+    status,
+    data,
+  }) {
     if (!userId) {
       throw new Error("Usuário não autenticado.");
     }
@@ -137,9 +145,9 @@ export const api = {
       transaction.set(pedidoRef, {
         id: pedidoRef.id,
         userId,
-        data: new Date().toISOString(),
+        data: data || new Date().toISOString(),
         createdAt: Date.now(),
-        status: "Pendente",
+        status: status || "Concluído",
         cliente: {
           nome: nomeCliente || "",
           telefone: telefoneCliente || "",
