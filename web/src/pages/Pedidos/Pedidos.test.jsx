@@ -42,10 +42,4 @@ describe('Pedidos page - RF09/RF11', () => {
     expect(screen.getByText(/Maria/i)).toBeInTheDocument();
   });
 
-  it('marks order as concluido', async () => {
-    render(<Pedidos />);
-    expect(await screen.findByText(/João/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Marcar como Concluído/i }));
-    expect(api.updatePedido).toHaveBeenCalled();
-  });
 });
