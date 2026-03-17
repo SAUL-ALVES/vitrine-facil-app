@@ -93,3 +93,49 @@ O **Vitrine Fácil** busca democratizar o acesso à tecnologia para pequenos neg
 * Ampliação do alcance comercial por meio do ambiente digital;
 * Fortalecimento da economia local em Tauá-CE.
 
+---
+
+## 6. Testes Automatizados (Unitários + Integração BDD)
+
+Este projeto usa **Vitest** + **React Testing Library** para escrever testes orientados a comportamento do usuário. A suíte cobre os principais requisitos funcionais (RF) do lojista e fluxo cliente.
+
+### 6.1 Como executar
+
+No diretório `web`:
+
+```bash
+npm test
+npm run test:watch
+npm run test:ui
+```
+
+### 6.2 Arquivos de testes implementados
+
+- `src/pages/Auth/Register.test.jsx` — RF02: cadastro/login do lojista
+- `src/pages/Products/Products.test.jsx` — RF04/RF12: cadastro, edição, exclusão e validações de produto
+- `src/pages/Vitrine/Vitrine.test.jsx` — RF06: busca e filtros por nome/categoria
+- `src/pages/Caixa/Caixa.test.jsx` — RF07/RF08: carrinho, quantidade, subtotal e finalização de pedido
+- `src/pages/Pedidos/Pedidos.test.jsx` — RF09/RF11: listagem de pedidos, filtro por status e atualização de status
+
+### 6.3 O que é validado na suíte
+
+- Cadastro de lojista e navegação após login
+- Validação de campos obrigatórios e mensagens de erro
+- Controle de estoque no carrinho (não permitir venda sem disponibilidade)
+- Cálculo de subtotal e total do pedido
+- Filtros de catálogo e pesquisa por nome/categoria
+- Atualização de status de pedido (Pendente → Concluído)
+
+### 6.4 Requisitos funcionais cobertos
+
+O projeto implementa testes para garantir os RFs principais:
+
+- **RF02** — Cadastro/Login do lojista
+- **RF03** — Cadastro e gestão de loja (informações de loja via fluxo de perfil)
+- **RF04** — Cadastro/edição/exclusão/ativação de produtos
+- **RF06** — Busca e filtros no catálogo
+- **RF07** — Carrinho de compras (adicionar/remover/quantidade)
+- **RF08** — Finalização de pedido (checkout no fluxo de caixa)
+- **RF09** — Gestão de pedidos do lojista (receber, confirmar, atualizar status)
+- **RF11** — Histórico de pedidos do cliente (visualização e status)
+- **RF12** — Controle de estoque (prevenir venda sem estoque)
