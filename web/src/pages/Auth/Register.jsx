@@ -11,8 +11,10 @@ export default function Register() {
   const { register } = useAuth(); 
   
   const [nome, setNome] = useState("");
+  const [cpf, setCpf] = useState(""); 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [segmento, setSegmento] = useState(""); 
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +23,7 @@ export default function Register() {
     setErro("");
 
     
-    if (!nome || !email || !senha) {
+    if (!nome || !cpf || !email || !senha || !segmento) {
       return setErro("Por favor, preencha todos os campos.");
     }
     if (senha.length < 6) {
@@ -30,11 +32,13 @@ export default function Register() {
 
     try {
       setLoading(true);
-      await register(nome, email, senha);
-      // Após o registo, vai para a tela de completar o perfil da loja
+      
+      await register({ nome, cpf, email, senha, segmento });
       navigate("/home"); 
     } catch (err) {
-      setErro("Erro ao criar conta. Tenta um e-mail diferente.");
+      
+      setErro(err.message || "Erro ao criar conta.");
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -45,7 +49,7 @@ export default function Register() {
       <h1 className="auth-title">Criar Conta</h1>
       <p className="auth-subtitle">Junte-se a dezenas de lojistas no VitrineFácil.</p>
 
-      <ErrorMessage  message={erro} />
+      <ErrorMessage message={erro} />
 
       <form className="auth-form" onSubmit={handleRegister}>
         
@@ -60,6 +64,16 @@ export default function Register() {
         />
 
         <Input 
+          label="CPF"
+          id="cpf"
+          type="text"
+          placeholder="000.000.000-00"
+          value={cpf}
+          onChange={(e) => setCpf(e.target.value)}
+          error={!!erro && !cpf}
+        />
+
+        <Input 
           label="E-mail"
           id="email"
           type="email"
@@ -70,7 +84,7 @@ export default function Register() {
         />
 
         <Input 
-          label="Palavra-passe"
+          label="Senha"
           id="senha"
           type="password"
           placeholder="No mínimo 6 caracteres"
@@ -78,6 +92,23 @@ export default function Register() {
           onChange={(e) => setSenha(e.target.value)}
           error={!!erro && (!senha || senha.length < 6)}
         />
+
+        
+        <label className="auth-label" htmlFor="segmento">
+          Segmento da Loja
+          <select 
+            id="segmento"
+            className="auth-input" 
+            value={segmento}
+            onChange={(e) => setSegmento(e.target.value)}
+          >
+            <option value="Moda">Moda e Vestuário</option>
+            <option value="Alimentação">Alimentação</option>
+            <option value="Eletrônicos">Eletrônicos</option>
+            <option value="Serviços">Serviços</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </label>
 
         <Button type="submit" isLoading={loading}>
           Criar minha conta

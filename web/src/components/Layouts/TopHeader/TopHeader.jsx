@@ -1,11 +1,24 @@
+import { Bell, LogOut, Settings } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import { Bell, Printer, Settings } from 'lucide-react';
+import { authService } from '../../../services/auth.js';
 import './TopHeader.css';
 
 export default function TopHeader({ showActions = true, subtitle = null }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const userInitials = user?.nome ? user.nome.substring(0, 2).toUpperCase() : "VF";
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      navigate('/login');
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+  };
 
   return (
     <header className="top-header">
@@ -21,8 +34,15 @@ export default function TopHeader({ showActions = true, subtitle = null }) {
         {showActions ? (
           <>
             <button className="icon-btn" type="button"><Bell size={20} /></button>
-            <button className="icon-btn text-red" type="button"><Printer size={20} /></button>
             <button className="icon-btn" type="button"><Settings size={20} /></button>
+            <button 
+              className="icon-btn text-red" 
+              type="button" 
+              onClick={handleLogout}
+              title="Sair"
+            >
+              <LogOut size={20} />
+            </button>
           </>
         ) : (
           <div className="user-avatar">{userInitials}</div>

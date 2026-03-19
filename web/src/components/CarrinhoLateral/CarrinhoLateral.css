@@ -52,6 +52,10 @@
     font-size: 14px;
     color: var(--vf-text-main);
     margin: 0;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .item-info span {
@@ -115,3 +119,15 @@
     font-weight: 800;
     color: var(--vf-text-main);
   }
+
+@media (max-width: 1024px) {
+  .checkout-section {
+    width: 100%; 
+  }
+  
+  .card-panel {
+    padding: 16px; 
+  }
+}
+
+
