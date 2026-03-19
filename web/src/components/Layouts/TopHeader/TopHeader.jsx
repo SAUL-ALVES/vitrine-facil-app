@@ -14,7 +14,7 @@ export default function TopHeader({ showActions = true, subtitle = null }) {
   const handleLogout = async () => {
     try {
       await authService.logout();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error("Erro ao sair:", error);
     }
