@@ -19,9 +19,9 @@ export default function TopHeader({ showActions = true, subtitle = null }) {
     }
   };
 
-  // Função que leva para a edição do perfil/loja
+  
   const handleEditLoja = () => {
-    navigate('/home');
+    navigate('/profile');
   };
 
   return (
