@@ -1,141 +1,203 @@
+# Vitrine Fácil
+ 
+> Catálogo virtual para o pequeno varejo de Tauá-CE — desenvolvido como projeto final da disciplina de **Programação Web II**.
+ 
+🔗 **Deploy:** [vitrine-facil.vercel.app](https://vitrine-facil.vercel.app)
+ 
+---
+ 
+## 1. Sobre o Projeto
 
-# Vitrine Fácil – Catálogo Virtual para o Pequeno Varejo (Tauá-CE)
+O **Vitrine Fácil** é uma tecnologia social criada para reduzir a exclusão digital e aumentar a competitividade de microempreendedores, pequenos varejistas e produtores da agricultura familiar na região de Tauá-CE.
 
-## 1. Visão Geral do Projeto
+A solução transforma o celular e o WhatsApp em uma plataforma de negócios acessível, reduzindo a carga cognitiva no gerenciamento de estoque e vendas.
 
-O **Vitrine Fácil** é uma tecnologia social desenvolvida para combater a exclusão digital e a baixa competitividade de microempreendedores, pequenos varejistas e produtores da agricultura familiar na região de Tauá-CE.  
-O projeto foca em reduzir a carga cognitiva no gerenciamento de estoque e vendas, transformando o celular e o WhatsApp em uma plataforma de negócios eficiente.
+### Escopo entregue (Programação Web II)
 
-A solução consiste em:
-- Um **aplicativo nativo (Android)** para o lojista gerenciar seu negócio;
-- Uma **vitrine web responsiva** para que os clientes visualizem produtos e realizem pedidos de forma organizada.
+O escopo de entrega contemplou exclusivamente a **interface web** (`/web`), que inclui:
+
+- Vitrine pública para clientes visualizarem lojas cadastradas
+- Autenticação de lojistas (cadastro e login via Firebase)
+- Perfil e configuração da loja
+- Cadastro, edição e exclusão de produtos com controle de estoque
+- Módulo de Caixa (PDV) com carrinho de compras e finalização de venda
+- Histórico de pedidos com filtros e atualização de status
+- Dashboard com resumo financeiro e gráfico de vendas
+
+
+> As pastas `/mobile` e `/server` representam extensões planejadas do sistema, **não implementadas dentro do prazo e escopo da disciplina**. São descritas na seção [Módulos Não Implementados](#5-módulos-não-implementados).
 
 ---
 
-## 2. Requisitos e Instruções Básicas
+## 2. Tecnologias Utilizadas
+
+| Camada | Tecnologia |
+|---|---|
+| Framework UI | React 19 + Vite (rolldown-vite) |
+| Roteamento | React Router DOM v7 |
+| Banco de Dados | Firebase Firestore |
+| Autenticação | Firebase Auth |
+| Armazenamento de Imagens | Firebase Storage |
+| Ícones | Lucide React |
+| Deploy | Vercel |
+
+---
+
+## 3. Instruções de Execução
 
 ### Pré-requisitos
 
-- **Node.js (LTS)** instalado  
-- **VS Code** com extensões recomendadas para **React / React Native**  
-- **Expo Go** instalado no celular (para testes do app mobile)
+- **Node.js LTS** (v20 ou superior)
+- Conta no [Firebase](https://firebase.google.com/) com um projeto criado
 
----
-
-### Como rodar o projeto localmente
-
-#### 2.1 Clone o repositório
+### 3.1 Clone o repositório
 
 ```bash
 git clone https://github.com/SAUL-ALVES/vitrine-facil-app
 cd vitrine-facil
-````
-
-#### 2.2 Iniciar o Backend (API)
-
-```bash
-cd server
-npm install
-npm start
 ```
 
-#### 2.3 Iniciar a Vitrine Web
+### 3.2 Configure as variáveis de ambiente
+
+Dentro da pasta `web`, crie um arquivo `.env` com as credenciais do seu projeto Firebase:
+
+```env
+VITE_FIREBASE_API_KEY=sua_api_key
+VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=seu_projeto_id
+VITE_FIREBASE_STORAGE_BUCKET=seu_projeto.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=seu_sender_id
+VITE_FIREBASE_APP_ID=seu_app_id
+```
+
+### 3.3 Instale as dependências e rode o projeto
 
 ```bash
-cd ../web
+cd web
 npm install
 npm run dev
 ```
 
-#### 2.4 Iniciar o App Mobile
+A aplicação estará disponível em `http://localhost:5173`.
+
+### 3.4 Outros comandos úteis
 
 ```bash
-cd ../mobile
-npm install
-npx expo start
+npm run build      # Gera o build de produção
+npm run preview    # Visualiza o build localmente
+npm run lint       # Roda o ESLint
 ```
 
 ---
 
-## 3. Tecnologias Utilizadas
+## 4. Organização de Pastas (`/web`)
 
-O projeto adota a arquitetura **Client–Server (Frontend e Backend)**, garantindo separação de responsabilidades e escalabilidade.
+```
+web/
+├── public/                        # Arquivos estáticos
+├── src/
+│   ├── components/                # Componentes globais reutilizáveis
+│   │   ├── UI/                    # Átomos de interface
+│   │   │   ├── BrandLogo/         # Logo da marca
+│   │   │   ├── Button/            # Botão com estado de loading
+│   │   │   ├── ErrorMessage/      # Mensagem de erro animada
+│   │   │   ├── Input/             # Campo de texto padronizado
+│   │   │   ├── ProductModal/      # Modal de criação/edição de produto
+│   │   │   ├── Select/            # Select estilizado
+│   │   │   └── TopHeaderEditButton/
+│   │   └── layout/                # Componentes de estrutura de página
+│   │       ├── BottomNav/         # Navegação inferior (mobile)
+│   │       └── TopHeader/         # Cabeçalho com logo, ações e logout
+│   │
+│   ├── features/                  # Módulos de domínio (Feature-Sliced)
+│   │   ├── auth/                  # Autenticação
+│   │   │   ├── context/           # AuthContext (estado global do usuário)
+│   │   │   ├── pages/
+│   │   │   │   └── Auth/
+│   │   │   │       ├── Layout/    # AuthLayout (wrapper das páginas públicas)
+│   │   │   │       ├── Profile/   # HomeWelcome (perfil da loja)
+│   │   │   │       ├── Login.jsx
+│   │   │   │       ├── Register.jsx
+│   │   │   │       
+│   │   │   └── services/
+│   │   │       └── auth.js        # Integração com Firebase Auth + Firestore
+│   │   │
+│   │   ├── caixa/                 # PDV / Módulo de vendas
+│   │   │   └── pages/Caixa/       # Caixa.jsx — grade de produtos + carrinho
+│   │   │
+│   │   ├── carrinho/              # Componente lateral do carrinho
+│   │   │   └── components/CarrinhoLateral/
+│   │   │
+│   │   ├── dashboard/             # Painel do lojista
+│   │   │   ├── components/
+│   │   │   │   ├── GraficoVendas/ # Gráfico de barras dos últimos 5 dias
+│   │   │   │   └── LojaCard/      # Card de loja para vitrine pública
+│   │   │   └── pages/Dashboard/   # Dashboard.jsx — resumo financeiro
+│   │   │
+│   │   ├── estoque/               # Gerenciamento de estoque
+│   │   │   ├── components/EstoqueStats/  # Cards de estatísticas
+│   │   │   └── pages/Estoque/     # Estoque.jsx — lista + filtros + FAB
+│   │   │
+│   │   ├── pedidos/               # Histórico de vendas
+│   │   │   ├── components/
+│   │   │   │   ├── PedidoCard/    # Card individual de pedido
+│   │   │   │   └── PedidosFiltros/ # Barra de busca e chips de filtro
+│   │   │   └── pages/Pedidos/     # Pedidos.jsx — listagem e cancelamento
+│   │   │
+│   │   ├── produtos/              # Componentes e páginas de produtos
+│   │   │   ├── components/
+│   │   │   │   ├── ImageUploader/ # Upload de imagem com preview
+│   │   │   │   ├── ProdutoCard/   # Card completo para tela de estoque
+│   │   │   │   ├── ProdutoGrid/   # Grade de produtos para o PDV
+│   │   │   │   └── ProdutoMiniCard/ # Mini card para listagem rápida
+│   │   │   └── pages/Products/    # Products.jsx — formulário de cadastro
+│   │   │
+│   │   └── vitrine/               # Vitrine pública (área do cliente)
+│   │       ├── components/
+│   │       │   ├── VitrineHero/   # Seção hero com gradiente escuro
+│   │       │   └── VitrineSearch/ # Barra de busca + chips de segmento
+│   │       └── pages/Vitrine/     # Vitrine.jsx — página inicial pública
+│   │
+│   ├── infra/                     # Camada de infraestrutura
+│   │   ├── firebase/
+│   │   │   └── firebase.js        # Inicialização do Firebase + firebaseService
+│   │   ├── http/
+│   │   │   └── api.js             # CRUD de produtos e pedidos via Firestore
+│   │   └── storage/
+│   │       └── storage.js         # Upload de imagens no Firebase Storage
+│   │
+│   ├── routes/
+│   │   └── AppRoutes.jsx          # Definição de rotas (públicas e protegidas)
+│   │
+│   ├── App.jsx                    # Raiz da aplicação
+│   ├── main.jsx                   # Entry point (BrowserRouter + AuthProvider)
+│   └── styles.css                 # Design tokens (variáveis CSS globais)
+│   
+│
+├── .gitignore
+├── eslint.config.js
+├── index.html
+├── package.json
+├── vite.config.js
 
-* **Mobile (App do Lojista):** React Native com Expo (foco em Android / Play Store)
-* **Frontend Web (Vitrine do Cliente):** React.js com Vite (hospedado na Vercel)
-* **Backend (API):** Node.js com Express
-* **Banco de Dados:** Firebase
-* **Comunicação:** Integração com WhatsApp para envio e notificação de pedidos
-
----
-
-## 4. Estrutura Inicial do Repositório
-
-O repositório está organizado para garantir manutenibilidade, clareza e isolamento de responsabilidades:
-
-```text
-/vitrine-facil
-├── /mobile          # App Nativo (React Native) – Gestão do Lojista
-├── /web             # Interface Web (React + Vite) – Vitrine do Cliente
-├── /server          # API REST (Node.js + Express) – Lógica de Negócio
-├── .gitignore       # Arquivos ignorados (node_modules, .env, etc.)
-└── README.md        # Documentação principal do projeto
 ```
 
 ---
 
-## 5. Objetivo Social e Impacto Esperado
+## 5. Módulos Não Implementados
 
-O **Vitrine Fácil** busca democratizar o acesso à tecnologia para pequenos negócios, promovendo:
+O repositório contém duas pastas adicionais que representam extensões planejadas para o sistema, mas que **não foram desenvolvidas dentro do prazo e escopo da disciplina de Programação Web II**:
 
-* Inclusão digital de microempreendedores;
-* Melhoria na organização de vendas e estoque;
-* Ampliação do alcance comercial por meio do ambiente digital;
-* Fortalecimento da economia local em Tauá-CE.
+### `/mobile` — App Nativo (React Native + Expo)
+
+Planejado como aplicativo Android para o lojista gerenciar o negócio diretamente pelo celular, com foco em uso offline e integração com a câmera para leitura de QR Code. Não implementado pois extrapola o escopo da disciplina, que tem foco em desenvolvimento web.
+
+### `/server` — API REST (Node.js + Express)
+
+Planejado como backend independente com Node.js, Express e PostgreSQL, substituindo o uso direto do Firebase no frontend. O `package.json` do server já contém as dependências base (`express`, `cors`, `dotenv`, `pg`), mas nenhuma rota ou lógica foi implementada. Optou-se por manter o Firebase como BaaS diretamente no frontend para viabilizar a entrega dentro do prazo.
 
 ---
 
-## 6. Testes Automatizados (Unitários + Integração BDD)
+## 6. Objetivo Social
 
-Este projeto usa **Vitest** + **React Testing Library** para escrever testes orientados a comportamento do usuário. A suíte cobre os principais requisitos funcionais (RF) do lojista e fluxo cliente.
-
-### 6.1 Como executar
-
-No diretório `web`:
-
-```bash
-npm test
-npm run test:watch
-npm run test:ui
-```
-
-### 6.2 Arquivos de testes implementados
-
-- `src/pages/Auth/Register.test.jsx` — RF02: cadastro/login do lojista
-- `src/pages/Products/Products.test.jsx` — RF04/RF12: cadastro, edição, exclusão e validações de produto
-- `src/pages/Vitrine/Vitrine.test.jsx` — RF06: busca e filtros por nome/categoria
-- `src/pages/Caixa/Caixa.test.jsx` — RF07/RF08: carrinho, quantidade, subtotal e finalização de pedido
-- `src/pages/Pedidos/Pedidos.test.jsx` — RF09/RF11: listagem de pedidos, filtro por status e atualização de status
-
-### 6.3 O que é validado na suíte
-
-- Cadastro de lojista e navegação após login
-- Validação de campos obrigatórios e mensagens de erro
-- Controle de estoque no carrinho (não permitir venda sem disponibilidade)
-- Cálculo de subtotal e total do pedido
-- Filtros de catálogo e pesquisa por nome/categoria
-- Atualização de status de pedido (Pendente → Concluído)
-
-### 6.4 Requisitos funcionais cobertos
-
-O projeto implementa testes para garantir os RFs principais:
-
-- **RF02** — Cadastro/Login do lojista
-- **RF03** — Cadastro e gestão de loja (informações de loja via fluxo de perfil)
-- **RF04** — Cadastro/edição/exclusão/ativação de produtos
-- **RF06** — Busca e filtros no catálogo
-- **RF07** — Carrinho de compras (adicionar/remover/quantidade)
-- **RF08** — Finalização de pedido (checkout no fluxo de caixa)
-- **RF09** — Gestão de pedidos do lojista (receber, confirmar, atualizar status)
-- **RF11** — Histórico de pedidos do cliente (visualização e status)
-- **RF12** — Controle de estoque (prevenir venda sem estoque)
+O **Vitrine Fácil** busca democratizar o acesso à tecnologia para pequenos negócios, promovendo inclusão digital de microempreendedores, melhoria na organização de vendas e estoque, ampliação do alcance comercial via ambiente digital e fortalecimento da economia local em Tauá-CE.
